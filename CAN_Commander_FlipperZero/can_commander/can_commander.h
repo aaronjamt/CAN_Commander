@@ -158,7 +158,7 @@ struct App {
     char args_obd_pid[96];
     char args_dbc_decode[64];
     char args_custom_inject_start[64];
-    char args_custom_inject_slots[5][APP_CUSTOM_INJECT_SLOT_ARGS_MAX];
+    char* args_custom_inject_slots[5];
     char args_custom_inject_bit[64];
     char args_custom_inject_clearbit[48];
     char args_custom_inject_field[80];

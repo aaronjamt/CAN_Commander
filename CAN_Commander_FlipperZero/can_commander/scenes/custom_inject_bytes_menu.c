@@ -142,11 +142,11 @@ static bool cancommander_scene_custom_inject_apply_bytes_to_slot(App* app) {
         return false;
     }
 
-    app_args_set_key_value(slot_args, sizeof(app->args_custom_inject_slots[0]), "mask", mask_hex);
-    app_args_set_key_value(slot_args, sizeof(app->args_custom_inject_slots[0]), "value", value_hex);
-    app_args_set_key_value(slot_args, sizeof(app->args_custom_inject_slots[0]), "xor", "0000000000000000");
-    app_args_set_key_value(slot_args, sizeof(app->args_custom_inject_slots[0]), "sig", "0");
-    app_args_set_key_value(slot_args, sizeof(app->args_custom_inject_slots[0]), "ext", "0");
+    app_args_set_key_value(slot_args, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "mask", mask_hex);
+    app_args_set_key_value(slot_args, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "value", value_hex);
+    app_args_set_key_value(slot_args, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "xor", "0000000000000000");
+    app_args_set_key_value(slot_args, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "sig", "0");
+    app_args_set_key_value(slot_args, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "ext", "0");
     app_custom_inject_save(app);
     app_set_status(app, "Set Bytes saved for slot %u", (unsigned)(slot_index + 1U));
     return true;

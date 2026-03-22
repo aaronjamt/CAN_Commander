@@ -332,6 +332,18 @@ static char* app_custom_inject_slot_ptr(App* app, uint8_t slot_index) {
         return NULL;
     }
 
+    if(!app->args_custom_inject_slots[slot_index]) {
+        app->args_custom_inject_slots[slot_index] = malloc(APP_CUSTOM_INJECT_SLOT_ARGS_MAX);
+        if(!app->args_custom_inject_slots[slot_index]) {
+            return NULL;
+        }
+
+        app_custom_inject_slot_defaults(
+            slot_index,
+            app->args_custom_inject_slots[slot_index],
+            APP_CUSTOM_INJECT_SLOT_ARGS_MAX);
+    }
+
     return app->args_custom_inject_slots[slot_index];
 }
 
@@ -341,6 +353,17 @@ static const char* app_custom_inject_slot_cptr(const App* app, uint8_t slot_inde
     }
 
     return app->args_custom_inject_slots[slot_index];
+}
+
+static void app_custom_inject_release_slot(App* app, uint8_t slot_index) {
+    if(!app || slot_index >= 5U) {
+        return;
+    }
+
+    if(app->args_custom_inject_slots[slot_index]) {
+        free(app->args_custom_inject_slots[slot_index]);
+        app->args_custom_inject_slots[slot_index] = NULL;
+    }
 }
 
 static void app_custom_inject_mark_all_unprovisioned(App* app) {
@@ -393,7 +416,7 @@ void app_custom_inject_reset_slot(App* app, uint8_t slot_index) {
         return;
     }
 
-    app_custom_inject_slot_defaults(slot_index, slot, sizeof(app->args_custom_inject_slots[0]));
+    app_custom_inject_slot_defaults(slot_index, slot, APP_CUSTOM_INJECT_SLOT_ARGS_MAX);
 }
 
 void app_custom_inject_reset_all_slots(App* app) {
@@ -402,7 +425,7 @@ void app_custom_inject_reset_all_slots(App* app) {
     }
 
     for(uint8_t i = 0; i < 5U; i++) {
-        app_custom_inject_reset_slot(app, i);
+        app_custom_inject_release_slot(app, i);
     }
 
     app_custom_inject_mark_all_unprovisioned(app);
@@ -2197,9 +2220,9 @@ static void app_custom_inject_update_profile_bit(
     app_custom_inject_bytes_to_hex(force_value, value_hex);
 
     app_args_set_key_value(
-        profile, sizeof(app->args_custom_inject_slots[0]), "mask", mask_hex);
+        profile, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "mask", mask_hex);
     app_args_set_key_value(
-        profile, sizeof(app->args_custom_inject_slots[0]), "value", value_hex);
+        profile, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "value", value_hex);
 }
 
 static void app_custom_inject_update_profile_field(
@@ -2245,15 +2268,15 @@ static void app_custom_inject_update_profile_field(
     snprintf(sig_value, sizeof(sig_value), "%llu", (unsigned long long)value);
 
     app_args_set_key_value(
-        profile, sizeof(app->args_custom_inject_slots[0]), "mask", mask_hex);
+        profile, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "mask", mask_hex);
     app_args_set_key_value(
-        profile, sizeof(app->args_custom_inject_slots[0]), "value", value_hex);
-    app_args_set_key_value(profile, sizeof(app->args_custom_inject_slots[0]), "sig", "1");
+        profile, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "value", value_hex);
+    app_args_set_key_value(profile, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "sig", "1");
     app_args_set_key_value(
-        profile, sizeof(app->args_custom_inject_slots[0]), "sig_start", sig_start);
-    app_args_set_key_value(profile, sizeof(app->args_custom_inject_slots[0]), "sig_len", sig_len);
+        profile, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "sig_start", sig_start);
+    app_args_set_key_value(profile, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "sig_len", sig_len);
     app_args_set_key_value(
-        profile, sizeof(app->args_custom_inject_slots[0]), "sig_value", sig_value);
+        profile, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "sig_value", sig_value);
 }
 
 void app_action_custom_inject_add(App* app, uint8_t slot_number) {
@@ -2501,11 +2524,11 @@ void app_action_custom_inject_field(App* app) {
             snprintf(sig_len, sizeof(sig_len), "%lu", (unsigned long)len);
             snprintf(sig_value, sizeof(sig_value), "%llu", value_u64);
             app_args_set_key_value(
-                profile, sizeof(app->args_custom_inject_slots[0]), "sig_start", sig_start);
+                profile, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "sig_start", sig_start);
             app_args_set_key_value(
-                profile, sizeof(app->args_custom_inject_slots[0]), "sig_len", sig_len);
+                profile, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "sig_len", sig_len);
             app_args_set_key_value(
-                profile, sizeof(app->args_custom_inject_slots[0]), "sig_value", sig_value);
+                profile, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "sig_value", sig_value);
         }
         app_custom_inject_set_slot_provisioned(app, slot_number, true);
         app_custom_inject_update_profile_field(
@@ -2810,7 +2833,7 @@ bool app_custom_inject_save_slot_set(App* app, const char* set_name) {
 
         bool slots_ok = true;
         for(uint8_t i = 0; i < 5U; i++) {
-            const char* profile = app->args_custom_inject_slots[i];
+            const char* profile = app_custom_inject_slot_cptr(app, i);
 
             char default_name[16] = {0};
             char slot_name[24] = {0};
@@ -3022,6 +3045,7 @@ bool app_custom_inject_load_slot_set_file(App* app, const char* file_path) {
             app_copy_string(loaded_name, sizeof(loaded_name), furi_string_get_cstr(value));
         }
 
+        bool slots_loaded = true;
         for(uint8_t i = 0; i < 5U; i++) {
             char default_name[16] = {0};
             char slot_name[24] = {0};
@@ -3137,9 +3161,15 @@ bool app_custom_inject_load_slot_set_file(App* app, const char* file_path) {
                 app_copy_string(interval_ms, sizeof(interval_ms), furi_string_get_cstr(value));
             }
 
+            char* slot = app_custom_inject_slot_ptr(app, i);
+            if(!slot) {
+                slots_loaded = false;
+                break;
+            }
+
             app_custom_inject_compose_slot_args(
-                app->args_custom_inject_slots[i],
-                sizeof(app->args_custom_inject_slots[i]),
+                slot,
+                APP_CUSTOM_INJECT_SLOT_ARGS_MAX,
                 i,
                 slot_name,
                 used,
@@ -3159,6 +3189,10 @@ bool app_custom_inject_load_slot_set_file(App* app, const char* file_path) {
                 sig_value,
                 count,
                 interval_ms);
+        }
+
+        if(!slots_loaded) {
+            break;
         }
 
         uint32_t active_slot = 0U;
@@ -4455,10 +4489,10 @@ void app_custom_inject_load(App* app) {
             char key[24] = {0};
             snprintf(key, sizeof(key), "slot_%u_args", (unsigned)(i + 1U));
             if(flipper_format_read_string(ff, key, value)) {
-                app_copy_string(
-                    app->args_custom_inject_slots[i],
-                    sizeof(app->args_custom_inject_slots[i]),
-                    furi_string_get_cstr(value));
+                char* slot = app_custom_inject_slot_ptr(app, i);
+                if(slot) {
+                    app_copy_string(slot, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, furi_string_get_cstr(value));
+                }
             }
         }
 
@@ -4512,7 +4546,14 @@ void app_custom_inject_save(App* app) {
         for(uint8_t i = 0; i < 5U; i++) {
             char key[24] = {0};
             snprintf(key, sizeof(key), "slot_%u_args", (unsigned)(i + 1U));
-            if(!flipper_format_write_string_cstr(ff, key, app->args_custom_inject_slots[i])) {
+            const char* profile = app_custom_inject_slot_cptr(app, i);
+            char default_profile[APP_CUSTOM_INJECT_SLOT_ARGS_MAX] = {0};
+            if(!profile) {
+                app_custom_inject_slot_defaults(i, default_profile, sizeof(default_profile));
+                profile = default_profile;
+            }
+
+            if(!flipper_format_write_string_cstr(ff, key, profile)) {
                 slots_ok = false;
                 break;
             }
@@ -4728,6 +4769,10 @@ static void app_free(App* app) {
     if(app->dbc_config_signals) {
         free(app->dbc_config_signals);
         app->dbc_config_signals = NULL;
+    }
+
+    for(uint8_t i = 0; i < 5U; i++) {
+        app_custom_inject_release_slot(app, i);
     }
 
     free(app);

@@ -327,7 +327,7 @@ static void cancommander_scene_custom_inject_slot_apply_name(App* app) {
     char name[24] = {0};
     if(slot_args && cancommander_scene_custom_inject_get_arg(
                         app->custom_inject_edit_name, "slot_name", name, sizeof(name))) {
-        app_args_set_key_value(slot_args, sizeof(app->args_custom_inject_slots[0]), "slot_name", name);
+        app_args_set_key_value(slot_args, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "slot_name", name);
         app_custom_inject_save(app);
     }
 }
@@ -338,7 +338,7 @@ static void cancommander_scene_custom_inject_slot_apply_bus(App* app) {
     char bus[12] = {0};
     if(slot_args && cancommander_scene_custom_inject_get_arg(
                         app->custom_inject_edit_bus, "bus", bus, sizeof(bus))) {
-        app_args_set_key_value(slot_args, sizeof(app->args_custom_inject_slots[0]), "bus", bus);
+        app_args_set_key_value(slot_args, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "bus", bus);
     }
 }
 
@@ -348,8 +348,8 @@ static void cancommander_scene_custom_inject_slot_apply_id(App* app) {
     char id[16] = {0};
     if(slot_args &&
        cancommander_scene_custom_inject_get_arg(app->custom_inject_edit_id, "id", id, sizeof(id))) {
-        app_args_set_key_value(slot_args, sizeof(app->args_custom_inject_slots[0]), "id", id);
-        app_args_set_key_value(slot_args, sizeof(app->args_custom_inject_slots[0]), "ext", "0");
+        app_args_set_key_value(slot_args, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "id", id);
+        app_args_set_key_value(slot_args, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "ext", "0");
     }
 }
 
@@ -366,19 +366,19 @@ static void cancommander_scene_custom_inject_slot_apply_mux(App* app) {
     char mux_value[16] = {0};
 
     if(cancommander_scene_custom_inject_get_arg(app->custom_inject_edit_mux, "mux", mux, sizeof(mux))) {
-        app_args_set_key_value(slot_args, sizeof(app->args_custom_inject_slots[0]), "mux", mux);
+        app_args_set_key_value(slot_args, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "mux", mux);
     }
     if(cancommander_scene_custom_inject_get_arg(
            app->custom_inject_edit_mux, "mux_start", mux_start, sizeof(mux_start))) {
-        app_args_set_key_value(slot_args, sizeof(app->args_custom_inject_slots[0]), "mux_start", mux_start);
+        app_args_set_key_value(slot_args, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "mux_start", mux_start);
     }
     if(cancommander_scene_custom_inject_get_arg(
            app->custom_inject_edit_mux, "mux_len", mux_len, sizeof(mux_len))) {
-        app_args_set_key_value(slot_args, sizeof(app->args_custom_inject_slots[0]), "mux_len", mux_len);
+        app_args_set_key_value(slot_args, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "mux_len", mux_len);
     }
     if(cancommander_scene_custom_inject_get_arg(
            app->custom_inject_edit_mux, "mux_value", mux_value, sizeof(mux_value))) {
-        app_args_set_key_value(slot_args, sizeof(app->args_custom_inject_slots[0]), "mux_value", mux_value);
+        app_args_set_key_value(slot_args, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "mux_value", mux_value);
     }
 
     app_custom_inject_save(app);
@@ -390,7 +390,7 @@ static void cancommander_scene_custom_inject_slot_apply_count(App* app) {
     char count[12] = {0};
     if(slot_args && cancommander_scene_custom_inject_get_arg(
                         app->custom_inject_edit_count, "count", count, sizeof(count))) {
-        app_args_set_key_value(slot_args, sizeof(app->args_custom_inject_slots[0]), "count", count);
+        app_args_set_key_value(slot_args, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "count", count);
     }
 }
 
@@ -400,7 +400,7 @@ static void cancommander_scene_custom_inject_slot_apply_interval(App* app) {
     char interval[16] = {0};
     if(slot_args && cancommander_scene_custom_inject_get_arg(
                         app->custom_inject_edit_interval, "interval_ms", interval, sizeof(interval))) {
-        app_args_set_key_value(slot_args, sizeof(app->args_custom_inject_slots[0]), "interval_ms", interval);
+        app_args_set_key_value(slot_args, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "interval_ms", interval);
     }
 }
 
@@ -685,8 +685,8 @@ bool cancommander_scene_custom_inject_slot_menu_on_event(void* context, SceneMan
         return true;
 
     case CustomInjectSlotSave:
-        app_args_set_key_value(slot_args, sizeof(app->args_custom_inject_slots[0]), "ext", "0");
-        app_args_set_key_value(slot_args, sizeof(app->args_custom_inject_slots[0]), "used", "1");
+        app_args_set_key_value(slot_args, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "ext", "0");
+        app_args_set_key_value(slot_args, APP_CUSTOM_INJECT_SLOT_ARGS_MAX, "used", "1");
         app_action_custom_inject_add(app, slot_number);
         app_action_custom_inject_modify(app, slot_number);
         app_custom_inject_save(app);
