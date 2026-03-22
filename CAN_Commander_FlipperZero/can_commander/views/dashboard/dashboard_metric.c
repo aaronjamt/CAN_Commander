@@ -598,6 +598,16 @@ static void dashboard_dbc_sync_registered(AppDashboardModel* model, const App* a
         return;
     }
 
+    if(!app->dbc_config_signals) {
+        memset(model->dbc_signals, 0, sizeof(model->dbc_signals));
+        model->dbc_signal_count = 0U;
+        model->dbc_signal_selected = 0U;
+        if(model->mode_page > 0U) {
+            model->mode_page = 0U;
+        }
+        return;
+    }
+
     DashboardDbcEntry ordered[APP_DBC_CFG_MAX_SIGNALS] = {0};
     uint8_t count = 0U;
 

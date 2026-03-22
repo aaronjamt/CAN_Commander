@@ -210,7 +210,7 @@ struct App {
     char custom_inject_set_name[32];
     char dbc_config_name[32];
     char dbc_config_save_name[32];
-    AppDbcSignalCache dbc_config_signals[APP_DBC_CFG_MAX_SIGNALS];
+    AppDbcSignalCache* dbc_config_signals;
     uint8_t dbc_config_signal_count;
 
     CcToolId pending_tool_start_id;

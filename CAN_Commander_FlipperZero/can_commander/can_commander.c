@@ -3207,6 +3207,11 @@ static void app_dbc_config_recount(App* app) {
         return;
     }
 
+    if(!app->dbc_config_signals) {
+        app->dbc_config_signal_count = 0U;
+        return;
+    }
+
     uint8_t count = 0U;
     for(uint8_t i = 0U; i < APP_DBC_CFG_MAX_SIGNALS; i++) {
         if(app->dbc_config_signals[i].used) {
@@ -3217,7 +3222,7 @@ static void app_dbc_config_recount(App* app) {
 }
 
 static int8_t app_dbc_config_find_slot_by_sid(const App* app, uint16_t sid) {
-    if(!app) {
+    if(!app || !app->dbc_config_signals) {
         return -1;
     }
 
@@ -3231,7 +3236,7 @@ static int8_t app_dbc_config_find_slot_by_sid(const App* app, uint16_t sid) {
 }
 
 static int8_t app_dbc_config_find_free_slot(const App* app) {
-    if(!app) {
+    if(!app || !app->dbc_config_signals) {
         return -1;
     }
 
@@ -3244,11 +3249,33 @@ static int8_t app_dbc_config_find_free_slot(const App* app) {
     return -1;
 }
 
+static bool app_dbc_config_ensure_storage(App* app) {
+    if(!app) {
+        return false;
+    }
+
+    if(app->dbc_config_signals) {
+        return true;
+    }
+
+    app->dbc_config_signals = malloc(sizeof(AppDbcSignalCache) * APP_DBC_CFG_MAX_SIGNALS);
+    if(!app->dbc_config_signals) {
+        return false;
+    }
+
+    memset(app->dbc_config_signals, 0, sizeof(AppDbcSignalCache) * APP_DBC_CFG_MAX_SIGNALS);
+    return true;
+}
+
 static bool app_dbc_config_upsert_signal(
     App* app,
     const CcDbcSignalDef* def,
     const char* signal_name) {
     if(!app || !def) {
+        return false;
+    }
+
+    if(!app_dbc_config_ensure_storage(app)) {
         return false;
     }
 
@@ -3293,7 +3320,7 @@ static bool app_dbc_config_upsert_signal(
 }
 
 static bool app_dbc_config_remove_signal(App* app, uint16_t sid) {
-    if(!app) {
+    if(!app || !app->dbc_config_signals) {
         return false;
     }
 
@@ -3367,12 +3394,14 @@ void app_dbc_config_reset(App* app) {
         return;
     }
 
-    memset(app->dbc_config_signals, 0, sizeof(app->dbc_config_signals));
+    if(app->dbc_config_signals) {
+        memset(app->dbc_config_signals, 0, sizeof(AppDbcSignalCache) * APP_DBC_CFG_MAX_SIGNALS);
+    }
     app->dbc_config_signal_count = 0U;
 }
 
 const char* app_dbc_config_lookup_label(const App* app, uint16_t sid, int64_t raw) {
-    if(!app) {
+    if(!app || !app->dbc_config_signals) {
         return NULL;
     }
 
@@ -3393,7 +3422,7 @@ const char* app_dbc_config_lookup_label(const App* app, uint16_t sid, int64_t ra
 }
 
 const char* app_dbc_config_lookup_signal_name(const App* app, uint16_t sid) {
-    if(!app) {
+    if(!app || !app->dbc_config_signals) {
         return NULL;
     }
 
@@ -3430,6 +3459,11 @@ static bool app_dbc_config_apply_to_firmware(App* app) {
     }
 
     uint8_t applied = 0U;
+    if(!app->dbc_config_signals) {
+        app_set_status(app, "DBC profile applied (%u signals)", (unsigned)applied);
+        return true;
+    }
+
     for(uint8_t i = 0U; i < APP_DBC_CFG_MAX_SIGNALS; i++) {
         const AppDbcSignalCache* signal = &app->dbc_config_signals[i];
         if(!signal->used) {
@@ -3517,7 +3551,7 @@ bool app_dbc_config_save_file(App* app, const char* config_name) {
         }
 
         uint8_t out_index = 0U;
-        for(uint8_t i = 0U; i < APP_DBC_CFG_MAX_SIGNALS; i++) {
+        for(uint8_t i = 0U; app->dbc_config_signals && i < APP_DBC_CFG_MAX_SIGNALS; i++) {
             const AppDbcSignalCache* signal = &app->dbc_config_signals[i];
             if(!signal->used) {
                 continue;
@@ -3898,7 +3932,7 @@ bool app_dbc_config_load_file(App* app, const char* file_path, bool apply_to_fir
             }
 
             const int8_t slot = app_dbc_config_find_slot_by_sid(app, def.sid);
-            if(slot < 0) {
+            if(slot < 0 || !app->dbc_config_signals) {
                 continue;
             }
             AppDbcSignalCache* signal = &app->dbc_config_signals[(uint8_t)slot];
@@ -4689,6 +4723,11 @@ static void app_free(App* app) {
 
     if(app->mutex) {
         furi_mutex_free(app->mutex);
+    }
+
+    if(app->dbc_config_signals) {
+        free(app->dbc_config_signals);
+        app->dbc_config_signals = NULL;
     }
 
     free(app);

@@ -315,28 +315,30 @@ void dashboard_set_mode(App* app, AppDashboardMode mode) {
                 memset(model->dbc_signals, 0, sizeof(model->dbc_signals));
 
                 uint8_t count = 0U;
-                for(uint8_t i = 0U; i < APP_DBC_CFG_MAX_SIGNALS; i++) {
-                    const AppDbcSignalCache* signal = &app->dbc_config_signals[i];
-                    if(!signal->used || count >= APP_DBC_CFG_MAX_SIGNALS) {
-                        continue;
-                    }
+                if(app->dbc_config_signals) {
+                    for(uint8_t i = 0U; i < APP_DBC_CFG_MAX_SIGNALS; i++) {
+                        const AppDbcSignalCache* signal = &app->dbc_config_signals[i];
+                        if(!signal->used || count >= APP_DBC_CFG_MAX_SIGNALS) {
+                            continue;
+                        }
 
-                    DashboardDbcEntry* slot = &model->dbc_signals[count];
-                    memset(slot, 0, sizeof(DashboardDbcEntry));
-                    slot->sid = signal->def.sid;
-                    slot->bus = signal->def.bus;
-                    slot->frame_id = signal->def.id;
-                    slot->in_range = true;
-                    if(signal->signal_name[0] != '\0') {
-                        strncpy(slot->signal_name, signal->signal_name, sizeof(slot->signal_name) - 1U);
-                        slot->signal_name[sizeof(slot->signal_name) - 1U] = '\0';
-                    } else {
-                        snprintf(slot->signal_name, sizeof(slot->signal_name), "SID%u", (unsigned)signal->def.sid);
-                        slot->signal_name[sizeof(slot->signal_name) - 1U] = '\0';
+                        DashboardDbcEntry* slot = &model->dbc_signals[count];
+                        memset(slot, 0, sizeof(DashboardDbcEntry));
+                        slot->sid = signal->def.sid;
+                        slot->bus = signal->def.bus;
+                        slot->frame_id = signal->def.id;
+                        slot->in_range = true;
+                        if(signal->signal_name[0] != '\0') {
+                            strncpy(slot->signal_name, signal->signal_name, sizeof(slot->signal_name) - 1U);
+                            slot->signal_name[sizeof(slot->signal_name) - 1U] = '\0';
+                        } else {
+                            snprintf(slot->signal_name, sizeof(slot->signal_name), "SID%u", (unsigned)signal->def.sid);
+                            slot->signal_name[sizeof(slot->signal_name) - 1U] = '\0';
+                        }
+                        strncpy(slot->unit, signal->def.unit, sizeof(slot->unit) - 1U);
+                        slot->unit[sizeof(slot->unit) - 1U] = '\0';
+                        count++;
                     }
-                    strncpy(slot->unit, signal->def.unit, sizeof(slot->unit) - 1U);
-                    slot->unit[sizeof(slot->unit) - 1U] = '\0';
-                    count++;
                 }
 
                 model->dbc_signal_count = count;
